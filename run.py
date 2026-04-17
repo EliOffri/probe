@@ -3,7 +3,8 @@ import os
 import json
 import uuid
 import argparse
-from datetime import datetime
+import yaml
+from datetime import datetime, UTC
 from dotenv import load_dotenv
 from rich.console import Console
 from rich.table import Table
@@ -20,6 +21,16 @@ from engine.agentic import AgenticSimulator
 from models.finding import Finding, Run, Severity
 
 console = Console()
+
+
+def load_target(path: str) -> dict:
+    with open(path) as f:
+        data = yaml.safe_load(f)
+    required = ["name", "system_prompt"]
+    for field in required:
+        if field not in data:
+            raise ValueError(f"Target file missing required field: {field}")
+    return data
 
 SEVERITY_ORDER = ["critical", "high", "medium", "low", "none"]
 
@@ -85,7 +96,7 @@ def print_summary(run: Run):
     console.print(table)
 
 
-async def main(system_prompt, target_name, rounds, attacks_per_round, skip_agentic):
+async def main(system_prompt, target_name, rounds, attacks_per_round, skip_agentic, target_context: str = ""):
     run_id = uuid.uuid4().hex[:8]
 
     console.print(Panel(
@@ -106,7 +117,7 @@ async def main(system_prompt, target_name, rounds, attacks_per_round, skip_agent
         target_name=target_name,
         target_system_prompt=system_prompt,
         model=target.model,
-        started_at=datetime.utcnow(),
+        started_at=datetime.now(UTC)
     )
 
     all_findings = []
@@ -118,6 +129,7 @@ async def main(system_prompt, target_name, rounds, attacks_per_round, skip_agent
         judge=judge,
         rounds=rounds,
         attacks_per_round=attacks_per_round,
+        target_context=target_context,
     )
     loop_findings = await loop.run_all(system_prompt)
     all_findings.extend(loop_findings)
@@ -130,7 +142,7 @@ async def main(system_prompt, target_name, rounds, attacks_per_round, skip_agent
 
     run.findings = all_findings
     run.total_attacks = target.call_count
-    run.completed_at = datetime.utcnow()
+    run.completed_at = datetime.now(UTC)
 
     print_summary(run)
 
@@ -142,27 +154,44 @@ async def main(system_prompt, target_name, rounds, attacks_per_round, skip_agent
     console.print(f"[dim]Report saved to {output_path}[/dim]\n")
 
 
-if __name__ == "__main__":
+def cli():
     parser = argparse.ArgumentParser(description="Probe — AI red team engine")
     parser.add_argument("--target", default="AcmeShop support agent")
+    parser.add_argument("--target-file", default=None,
+                        help="Path to a target YAML file (e.g. targets/banking_assistant.yaml)")
     parser.add_argument("--system-prompt", default=None)
-    parser.add_argument("--hardened", action="store_true",help="Use explicitly hardened system prompt")
     parser.add_argument("--rounds", type=int, default=2)
     parser.add_argument("--attacks", type=int, default=8)
     parser.add_argument("--no-agentic", action="store_true")
+    parser.add_argument("--hardened", action="store_true")
     args = parser.parse_args()
 
+    target_name = args.target
     system_prompt = DEFAULT_SYSTEM_PROMPT
-    if args.hardened:
+    target_context = ""
+
+    if args.target_file:
+        target_data = load_target(args.target_file)
+        target_name = target_data["name"]
+        system_prompt = target_data["system_prompt"].strip()
+        target_context = (
+            f"System type: {target_data.get('description', '')}\n"
+            f"Known attack surfaces: {', '.join(target_data.get('expected_violations', []))}"
+        )
+    elif args.hardened:
         system_prompt = HARDENED_SYSTEM_PROMPT
-    if args.system_prompt:
+    elif args.system_prompt:
         with open(args.system_prompt) as f:
             system_prompt = f.read()
 
     asyncio.run(main(
         system_prompt=system_prompt,
-        target_name=args.target,
+        target_name=target_name,
         rounds=args.rounds,
         attacks_per_round=args.attacks,
         skip_agentic=args.no_agentic,
+        target_context=target_context,
     ))
+
+if __name__ == "__main__":
+    cli()

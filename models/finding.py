@@ -39,6 +39,7 @@ class AttackResult(BaseModel):
     evidence: Optional[str] = None
     turn_number: int = 1
     tool_calls: list[dict] = Field(default_factory=list)
+    remediation: Optional[str] = None
 
 
 class Finding(BaseModel):

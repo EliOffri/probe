@@ -31,12 +31,14 @@ class AdaptiveLoop:
         judge: JudgeLLM,
         rounds: int = 3,
         attacks_per_round: int = 10,
+        target_context: str = "",
     ):
         self.target = target
         self.attacker = attacker
         self.judge = judge
         self.rounds = rounds
         self.attacks_per_round = attacks_per_round
+        self.target_context = target_context
         self.all_results: list[AttackResult] = []
 
     async def run_all(self, system_prompt: str) -> list[Finding]:
@@ -73,6 +75,7 @@ class AdaptiveLoop:
                 system_prompt=system_prompt,
                 category=category,
                 n=self.attacks_per_round,
+                target_context=self.target_context,
             )
 
             # Skip prompts we already tried
@@ -164,6 +167,7 @@ class AdaptiveLoop:
             response=result.response,
             evidence=result.evidence,
             tool_calls=result.tool_calls,
+            remediation=result.remediation
         )
 
     def _is_duplicate(self, new: Finding, existing: list[Finding]) -> bool:
