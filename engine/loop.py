@@ -61,7 +61,7 @@ class AdaptiveLoop:
         Each round the attacker learns from the previous round's results.
         """
         console.print(
-            f"\n[dim]Category:[/dim] [bold]{category.value if hasattr(category, 'value') else category}[/bold] "
+            f"\n[dim]Category:[/dim] [bold]{category.value}[/bold] "
             f"[dim]({self.rounds} rounds × {self.attacks_per_round} attacks)[/dim]"
         )
 
@@ -132,11 +132,9 @@ class AdaptiveLoop:
         """Fire all prompts in a batch concurrently."""
 
         async def attack_one(prompt: str, idx: int) -> AttackResult | None:
-            attack_id = f"{category.value if hasattr(category, 'value') else category}_r{round_num}_{idx}_{uuid.uuid4().hex[:6]}"
+            attack_id = f"{category.value}_r{round_num}_{idx}_{uuid.uuid4().hex[:6]}"
             try:
                 response = await self.target.send(prompt)
-                console.print(f"\n[dim]PROMPT:[/dim] {prompt[:80]}")
-                console.print(f"[dim]RESPONSE:[/dim] {response[:120]}\n")
                 result = await self.judge.evaluate(
                     system_prompt=system_prompt,
                     attack_prompt=prompt,
@@ -161,7 +159,7 @@ class AdaptiveLoop:
             category=result.category,
             severity=result.severity,
             title=f"{result.severity.value.upper()}: "
-                  f"{(result.category.value if hasattr(result.category, 'value') else result.category).replace('_', ' ').title()}",
+                  f"{result.category.value.replace('_', ' ').title()}",
             description=result.reasoning,
             prompt=result.prompt,
             response=result.response,

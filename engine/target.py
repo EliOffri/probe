@@ -1,6 +1,5 @@
 import os
-import litellm
-from litellm import acompletion
+from engine import acompletion_with_retry
 
 
 class TargetAdapter:
@@ -28,7 +27,7 @@ class TargetAdapter:
 
         messages.append({"role": "user", "content": user_message})
 
-        response = await acompletion(
+        response = await acompletion_with_retry(
             model=self.model,
             messages=messages,
             temperature=0.7,
@@ -54,7 +53,7 @@ class TargetAdapter:
 
         messages.append({"role": "user", "content": user_message})
 
-        response = await acompletion(
+        response = await acompletion_with_retry(
             model=self.model,
             messages=messages,
             tools=tools,

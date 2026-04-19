@@ -24,6 +24,7 @@ class AttackCategory(str, Enum):
     SOCIAL_ENGINEERING = "social_engineering"
     AUTHORITY_IMPERSONATION = "authority_impersonation"
     CONTEXT_MANIPULATION = "context_manipulation"
+    FUNCTIONAL_BYPASS = "functional_bypass"
 
 
 
