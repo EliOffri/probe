@@ -1,0 +1,41 @@
+# Generic REST chat endpoint template
+#
+# Use this for any chatbot that isn't Botpress or Voiceflow.
+#
+# How to find the endpoint for any web chatbot:
+#
+#   1. Open the company's site in Chrome
+#   2. DevTools → Network tab → filter "Fetch/XHR"
+#   3. Type a message in their chat widget
+#   4. Find the POST request that carries your message
+#   5. Right-click → "Copy as cURL" to get the full request including headers
+#   6. Fill in the details below
+#
+# payload_template: use {message} where the user's text goes,
+#                   use {session_id} for a consistent session identifier.
+#
+# response_path: dot-notation path to the text in the JSON response.
+#   e.g. if response is {"data": {"reply": "Hello"}} → use "data.reply"
+#        if response is {"text": "Hello"} → use "text"
+#        if response is {"choices": [{"message": {"content": "Hi"}}]} → use "choices.0.message.content"
+
+name: "Company XYZ Chatbot"
+description: "Customer support chatbot."
+
+system_prompt: |
+  You are a customer support agent.
+  You help users with their questions and orders.
+
+http_target:
+  type: generic
+  endpoint: "https://api.example.com/chat/message"
+  headers:
+    Authorization: "Bearer YOUR-TOKEN-HERE"
+    Content-Type: "application/json"
+    X-Session-Id: "{session_id}"
+  payload_template: |
+    {
+      "message": "{message}",
+      "session_id": "{session_id}"
+    }
+  response_path: "reply"

@@ -1,0 +1,47 @@
+name: Probe AI red team
+description: Automated adversarial testing for AI agents
+author: elioffri
+
+inputs:
+  target-file:
+    description: Path to target YAML file
+    required: false
+    default: targets/ecommerce.yaml
+  system-prompt:
+    description: Path to system prompt file (alternative to target-file)
+    required: false
+  rounds:
+    description: Attack rounds per category
+    required: false
+    default: "1"
+  attacks:
+    description: Attacks per round per category
+    required: false
+    default: "5"
+  fail-on:
+    description: Severity level that fails the build (critical, high, medium)
+    required: false
+    default: critical
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install Probe
+      shell: bash
+      run: pip install -r ${{ github.action_path }}/requirements.txt && pip install -e ${{ github.action_path }}
+
+    - name: Run Probe
+      shell: bash
+      run: |
+        probe \
+          --target-file ${{ inputs.target-file }} \
+          --rounds ${{ inputs.rounds }} \
+          --attacks ${{ inputs.attacks }} \
+          --no-agentic \
+          --ci \
+          --fail-on ${{ inputs.fail-on }}

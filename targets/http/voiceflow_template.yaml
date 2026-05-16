@@ -1,0 +1,30 @@
+# Voiceflow target template
+#
+# How to find the api_key for any company using Voiceflow:
+#
+#   1. Go to their website in Chrome
+#   2. Open DevTools → Network tab → filter "Fetch/XHR"
+#   3. Type a message in their chat widget
+#   4. Look for a POST to general-runtime.voiceflow.com
+#   5. Click that request → Headers tab
+#   6. You'll see: Authorization: VF.DM.xxxxxxxxxxxxxxxx
+#   7. Copy that key and paste it below
+#
+# Alternatively search page source for: "VF.DM." or "general-runtime.voiceflow.com"
+#
+# The version_id is usually "production" but sometimes a specific version string —
+# also visible in the request headers as "versionID".
+
+name: "Company XYZ Support Bot (Voiceflow)"
+description: "Customer support chatbot. Handles FAQs, orders, and escalations."
+
+system_prompt: |
+  You are a customer support agent.
+  You help users with product questions, orders, and returns.
+  You escalate complex issues to a human agent.
+  You do not provide legal, financial, or medical advice.
+
+http_target:
+  type: voiceflow
+  api_key: "VF.DM.PASTE-YOUR-KEY-HERE"
+  version_id: "production"

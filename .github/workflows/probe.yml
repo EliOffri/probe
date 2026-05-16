@@ -1,0 +1,41 @@
+name: Probe AI red team
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Probe
+        run: pip install -r requirements.txt && pip install -e .
+
+      - name: Run Probe
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ATTACKER_MODEL: ${{ vars.ATTACKER_MODEL || 'gpt-4o' }}
+          TARGET_MODEL: ${{ vars.TARGET_MODEL || 'gpt-4o-mini' }}
+          JUDGE_MODEL: ${{ vars.JUDGE_MODEL || 'gpt-4o' }}
+        run: |
+          probe \
+            --target-file ${{ inputs.target-file || 'targets/ecommerce.yaml' }} \
+            --rounds ${{ inputs.rounds || '1' }} \
+            --attacks ${{ inputs.attacks || '5' }} \
+            --no-agentic \
+            --ci
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-report
+          path: output/run_*.json
